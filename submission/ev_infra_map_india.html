@@ -45,7 +45,7 @@ Techfest 2026-27, IIT Bombay · EV Infra &amp; Green Mobility AI Challenge · Ch
   <tr><th>Team ID</th><td>TM-72BD3802D52</td></tr>
   <tr><th>Institutions</th><td>C.V. Raman Global University, Bhubaneswar (Shrimon Mishra, Shinjan Sarkar)<br>Indian Institute of Technology (Indian School of Mines), Dhanbad (Khushi Jha)</td></tr>
   <tr><th>Team Leader (submitting)</th><td>Shrimon Mishra · shrimonmishralimitless@gmail.com · [phone]</td></tr>
-  <tr><th>Members</th><td>Shrimon Mishra (Team Leader), C.V. Raman Global University · shrimonmishralimitless@gmail.com<br>Shinjan Sarkar, C.V. Raman Global University · shinjansarkar.112813@gmail.com<br>Khushi Jha, IIT (ISM) Dhanbad · jhakhushi397@gmail.com</td></tr>
+  <tr><th>Members</th><td>Shrimon Mishra (Team Leader, Modelling lead), C.V. Raman Global University · shrimonmishralimitless@gmail.com<br>Shinjan Sarkar (Data, GIS and back end), C.V. Raman Global University · shinjansarkar.112813@gmail.com<br>Khushi Jha (Front end and dashboard), IIT (ISM) Dhanbad · jhakhushi397@gmail.com</td></tr>
 </table>
 
 <div class="toc">
@@ -439,13 +439,12 @@ Public share(seg, hex) = 1 − (home- or depot-feasible share × home-charging p
   <tr><td><b>Roadmap only</b></td><td>Live OCPI feeds, DISCOM capacity data, national refresh automation</td></tr>
 </table>
 <table>
-  <tr><th>Role</th><th>Owner</th><th>Responsibilities</th></tr>
-  <tr><td>Data lead</td><td>[name]</td><td>Ingestion, schema, census, VAHAN extraction, reconciliation</td></tr>
-  <tr><td>Modelling lead</td><td>[name]</td><td>Matching model, demand, forecast, need sizing, viability, siting, validation</td></tr>
-  <tr><td>GIS and back end</td><td>[name]</td><td>PostGIS, H3, routing (OSRM), vector tiles, FastAPI</td></tr>
-  <tr><td>Front end and dashboard</td><td>[name]</td><td>React + MapLibre, dashboard, Decision Cards, exports</td></tr>
-  <tr><td>Documentation and demo (Team Leader)</td><td>Shrimon Mishra</td><td>Methodology document, Method Cards, video, presentation</td></tr>
+  <tr><th>Member</th><th>Roles</th><th>Responsibilities</th></tr>
+  <tr><td>Shrimon Mishra (Team Leader)</td><td>Modelling lead; project lead</td><td>Matching model, EV stock and forecast, need sizing (energy, Erlang-C, corridor), Gap Index, viability, siting and Allocation Advisor, validation suite; overall plan and integration; compiles the methodology document; presents at the finale</td></tr>
+  <tr><td>Shinjan Sarkar</td><td>Data lead; GIS and back end</td><td>Data acquisition and VAHAN extraction, schema, ingestion, census and reconciliation; PostGIS, H3, OSRM routing, vector tiles, FastAPI; deployment and offline build</td></tr>
+  <tr><td>Khushi Jha</td><td>Front end and dashboard; demo</td><td>React + MapLibre national map, dashboard, Decision Cards, exports; user testing; demo video</td></tr>
 </table>
+<p class="small">Each owner writes the Method Cards for their own components. Shrimon reviews every model output before it reaches the dashboard, and Shinjan and Khushi pair on the API–front end contract in Week 1.</p>
 <p class="small">Working rhythm: a 15-minute sync twice a week, a shared task board, and a demo of the current build to the whole team every Sunday.</p>
 
 <h3>11.8 Testing and quality assurance</h3>
