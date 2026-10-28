@@ -30,6 +30,7 @@
   .arch { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 8px 0 12px; }
   .arch div { border: 1px solid var(--accent); border-radius: 6px; padding: 6px; font-size: 8.6pt; background: var(--accent-soft); }
   .arch b { display: block; font-size: 9.2pt; margin-bottom: 2px; }
+  .gantt td { height: 16px; } .gantt td.on { background: #0b6e4f; } .gantt td.lt { background: #a8d5c2; } .gantt th:not(:first-child) { text-align:center; width: 8%; }
   .toc { columns: 2; font-size: 9.6pt; margin: 6px 0 0; }
 </style>
 </head>
@@ -337,23 +338,105 @@ Public share(seg, hex) = 1 − (home- or depot-feasible share × home-charging p
 <p>Avoiding stranded assets and duplicate sanctions at a single Mandate-class highway site saves ₹42 lakh, so the gains needed are small compared with the money at stake.</p>
 <p><b>Funding and sustainability.</b> (a) A government-funded public good under MHI/BEE, possibly with a small monitoring-and-evaluation share of scheme disbursement; (b) state-level analytics subscriptions; (c) optional paid site-selection and benchmarking reports for CPOs, OEMs and DISCOMs, strictly separated so no commercial user gets privileged access to government data; (d) academic and open-source maintenance through ICAT-linked institutions. The platform never depends on one revenue stream.</p>
 
-<h2>11. Implementation roadmap to the Grand Finale (7 Nov – 16 Dec 2026)</h2>
-<p>We build a <b>thin end-to-end slice first</b> (census → gap → map → one Decision Card for one Odisha district) in Week 1 and deepen it every week after. That way a working demo exists from the first week and the front end is never left to the end.</p>
+<h2>11. Implementation roadmap to the Grand Finale</h2>
+<p>This section is our step-by-step build plan from submission (30 Oct) to the Grand Finale at IIT Bombay (16–18 Dec 2026). Our rule: build a <b>thin end-to-end slice first</b> (census → gap → map → one Decision Card for one Odisha district) and deepen it every week. A working demo exists from Week 1, and the front end is never left to the end.</p>
+
+<h3>11.1 What the roadmap must cover, and where it is answered</h3>
+<table>
+  <tr><th>Round 1 requirement</th><th>Where it is answered</th></tr>
+  <tr><td>Data sources to be used</td><td>§5 (data layers and tiers) and §11.3 (acquisition plan with fallbacks)</td></tr>
+  <tr><td>Tools and technologies planned</td><td>§11.4 (stack by layer, with reasons)</td></tr>
+  <tr><td>Development stages</td><td>§11.2 (stages with inputs, outputs and exit criteria) and §11.6 (weekly plan and Gantt chart)</td></tr>
+  <tr><td>How we arrive at the final prototype</td><td>§11.5 (build plan for each finale deliverable), §11.8 (testing) and §11.9 (finale readiness)</td></tr>
+</table>
+
+<h3>11.2 Development stages</h3>
+<table>
+  <tr><th>Stage</th><th>When</th><th>What we build</th><th>Exit criterion (must be true to move on)</th></tr>
+  <tr><td><b>D0 Set-up and data pull</b></td><td>31 Oct – 6 Nov (while results are awaited)</td><td>Git repository, Docker environment, PostGIS database, schema v1; start monthly VAHAN extraction for Odisha and Karnataka; download OCM, OSM, WorldPop, GHSL, Census and OMC outlet lists; collect official counts and MoP norm text</td><td>All T0 sources stored as dated raw snapshots; schema reviewed by the team</td></tr>
+  <tr><td><b>D1 Data foundation</b></td><td>Week 1</td><td>Ingestion and normalisation for every source; geohash blocking; first matching and clustering; <b>vertical slice</b> for one Odisha district (census → gap → map → Decision Card)</td><td>Census ≥ 60% of Odisha's official count; the slice runs end to end from one command</td></tr>
+  <tr><td><b>D2 Trust and supply</b></td><td>Week 2</td><td>ML matching model (500 labelled pairs); confidence score; capture–recapture undercount; reconciliation waterfall; Effective Supply; EV stock and forecast</td><td>Matching precision ≥ 0.9 on held-out pairs; forecast backtest MAPE &lt; 20%</td></tr>
+  <tr><td><b>D3 Analytics core</b></td><td>Week 3</td><td>Demand spread to H3 hexes; need sizing (energy + Erlang-C + corridor); Gap Index on fixed scales; norm engine with versions; viability labels; budget-constrained siting</td><td>Need tables for three scenarios; ranked sites with Decision Cards for Odisha; pilot Baleshwar example reproduced</td></tr>
+  <tr><td><b>D4 Product</b></td><td>Week 4</td><td>FastAPI endpoints; vector tiles; React + MapLibre national map; dashboard and indicators; Allocation Advisor; exports</td><td>All five product deliverables working for Odisha in the browser; page loads in under 3 seconds</td></tr>
+  <tr><td><b>D5 Second state and documents</b></td><td>Week 5</td><td>Karnataka run through the same pipeline; validation report; methodology document with Method Cards; scalability roadmap</td><td>Karnataka produced with no code changes, only configuration; documents complete</td></tr>
+  <tr><td><b>D6 Finale readiness</b></td><td>12–15 Dec</td><td>Demo video, presentation, rehearsals, offline backup, roadmap-evolution change log</td><td>Two full rehearsals within 10 minutes; offline demo tested on the presenting laptop</td></tr>
+</table>
+
+<h3>11.3 Data acquisition plan</h3>
+<table>
+  <tr><th>Data</th><th>How we get it</th><th>Format</th><th>When</th><th>Fallback if unavailable</th></tr>
+  <tr><td>VAHAN EV registrations</td><td>Public VAHAN dashboard, monthly by RTO, class and fuel; extracted manually within its terms of use</td><td>CSV / Excel</td><td>D0–W2</td><td>Annual series already pulled in the pilot; state transport figures</td></tr>
+  <tr><td>Official charger counts</td><td>EV Yatra (BEE), MoP/MHI statements, Parliament replies, PM E-DRIVE and FAME-II sanctioned lists</td><td>Web pages / PDF</td><td>D0–W1</td><td>Published national and state totals as reconciliation targets only</td></tr>
+  <tr><td>Open charger locations</td><td>OpenChargeMap API; OSM extract (Geofabrik India) filtered for charging stations</td><td>JSON / PBF</td><td>D0</td><td>None needed (both open)</td></tr>
+  <tr><td>Operator and OEM locations</td><td>Public locators where terms allow; outreach to 3–5 operators for a sample feed</td><td>JSON / CSV</td><td>W1–W3</td><td>Flagged synthetic sample with realistic attributes, documented in the synthetic-data register</td></tr>
+  <tr><td>OMC fuel outlets</td><td>Published outlet lists of IOCL, BPCL and HPCL; OSM fuel stations</td><td>CSV</td><td>D0–W1</td><td>OSM fuel stations only</td></tr>
+  <tr><td>Roads, highways, routing</td><td>OSM road graph (OSRM build for Odisha and Karnataka); NH network</td><td>PBF / GeoJSON</td><td>D0–W2</td><td>Straight-line distance with a road-detour factor (flagged)</td></tr>
+  <tr><td>Traffic on NH-16</td><td>Published NHAI/MoRTH traffic counts</td><td>PDF / tables</td><td>W2</td><td>Gravity-model proxy between corridor cities (flagged)</td></tr>
+  <tr><td>Population, built-up area, night-lights</td><td>WorldPop, GHSL, VIIRS</td><td>GeoTIFF</td><td>D0</td><td>Census 2011 district totals with projections</td></tr>
+  <tr><td>Housing (home-charging feasibility)</td><td>Census and NSS housing tables; open building footprints</td><td>CSV / vector</td><td>W2–W3</td><td>Documented default public shares, with sensitivity range</td></tr>
+  <tr><td>Grid</td><td>OSM substations; SERC EV tariff orders</td><td>Vector / PDF</td><td>W2</td><td>Distance to nearest substation as a proxy</td></tr>
+  <tr><td>Boundaries</td><td>Open state and district boundary datasets</td><td>GeoJSON</td><td>D0</td><td>None needed</td></tr>
+</table>
+<p class="small">Every dataset is logged in a data register (source, licence, date, snapshot ID, synthetic or not), which feeds the methodology document and the rule 5 / rule 6 disclosures.</p>
+
+<h3>11.4 Tools and technologies</h3>
+<table>
+  <tr><th>Layer</th><th>Tools</th><th>Why</th></tr>
+  <tr><td>Data processing</td><td>Python, pandas, GeoPandas, Shapely, rasterio, H3</td><td>Standard, free, fast to develop; H3 gives consistent hexes nationally</td></tr>
+  <tr><td>Storage</td><td>PostgreSQL + PostGIS</td><td>Spatial queries, snapshots and run tables in one place</td></tr>
+  <tr><td>Modelling</td><td>scikit-learn, LightGBM, statsmodels, PuLP / OR-Tools (siting), custom Erlang-C</td><td>Explainable models; open-source optimisation solvers</td></tr>
+  <tr><td>Routing</td><td>OSRM on OSM</td><td>Free drive-time isochrones and corridor simulation</td></tr>
+  <tr><td>AI-assisted extraction</td><td>LLM-assisted PDF table extraction with source-page links</td><td>Turns official PDFs into rows quickly; every row is human-checked</td></tr>
+  <tr><td>API</td><td>FastAPI (REST + GeoJSON)</td><td>Fast, typed, auto-documented</td></tr>
+  <tr><td>Map and dashboard</td><td>React, MapLibre GL, ECharts, PMTiles vector tiles</td><td>Open-source, smooth at national scale; no paid map licences</td></tr>
+  <tr><td>Fallback front end</td><td>Streamlit + Folium</td><td>Used only if the React front end slips</td></tr>
+  <tr><td>Engineering</td><td>Git and GitHub, Docker Compose, pytest, GitHub Actions</td><td>Reproducible runs, automated tests, same set-up on every laptop</td></tr>
+  <tr><td>Hosting for the demo</td><td>One cloud VM (or free tier) plus a full local copy on the presenting laptop</td><td>The demo works even without venue internet</td></tr>
+</table>
+
+<h3>11.5 Build plan for each finale deliverable</h3>
+<table>
+  <tr><th>Finale deliverable (PS)</th><th>Components we build</th><th>Built in</th><th>Done when</th></tr>
+  <tr><td>Functional prototype / web platform with a unified view</td><td>Census pipeline, PostGIS, API, web app with three personas</td><td>W1 slice → W4 complete</td><td>One URL shows the reconciled charger census for India, Odisha and Karnataka</td></tr>
+  <tr><td>Interactive national GIS map</td><td>Vector tiles for state, district, hex and site levels; layers for chargers, Effective Supply, gaps, norms, corridors, confidence and undercount</td><td>W1 basic → W4 full</td><td>Zoom from India to a single site; click a hex for its Decision Card</td></tr>
+  <tr><td>Analytical methodology document</td><td>Method Cards per metric, assumptions register, validation report</td><td>Written alongside each stage; finalised W5</td><td>Every number on screen traces to a Method Card</td></tr>
+  <tr><td>Charger requirement estimation and recommendation module</td><td>Forecast, need sizing, corridor model, viability, siting, Allocation Advisor</td><td>W2–W4</td><td>For any district, corridor or state: points needed by class, cost, viability label and ranked sites</td></tr>
+  <tr><td>Decision-support dashboard</td><td>Indicator panel, league table, scenario and norm switches, tornado chart, Allocation Note export</td><td>W4</td><td>A non-technical user finds the top-priority district in under 2 minutes</td></tr>
+  <tr><td>Presentation / demonstration video</td><td>Five-minute demo story recorded on Odisha (NH-16, Puri–Konark–Bhubaneswar) with Karnataka contrast</td><td>12–15 Dec</td><td>Video under 6 minutes, subtitled, uploaded and also stored offline</td></tr>
+  <tr><td>Scalability roadmap</td><td>Section 12, updated with real run times and costs from the prototype</td><td>W5</td><td>Gates and costs backed by measured numbers</td></tr>
+</table>
+
+<h3>11.6 Weekly plan</h3>
+<table>
+  <tr><th>Week</th><th>Focus</th><th>Output</th></tr>
+  <tr><td>D0 (31 Oct – 6 Nov)</td><td>Set-up; data pull; schema</td><td>Raw snapshots; schema v1</td></tr>
+  <tr><td>W1 (7–13 Nov)</td><td>Ingestion; dedupe; <b>vertical slice end to end</b>; label 500 match pairs</td><td>Working skeleton; first census</td></tr>
+  <tr><td>W2 (14–20 Nov)</td><td>Matching model; confidence; undercount; waterfall; Effective Supply; forecast</td><td>Reconciliation chart; three-scenario stock forecast</td></tr>
+  <tr><td>W3 (21–27 Nov)</td><td>Demand spread; need sizing; Gap Index and norm engine; viability; siting; validation</td><td>Ranked sites; validation report draft</td></tr>
+  <tr><td>W4 (28 Nov – 4 Dec)</td><td>API; map; dashboard; Allocation Advisor; Decision Cards; national state-level layer</td><td>Feature-complete platform for Odisha</td></tr>
+  <tr><td>W5 (5–11 Dec)</td><td>Karnataka run; methodology document; scalability roadmap; bug fixing</td><td>Two-state platform and documents</td></tr>
+  <tr><td>W6 (12–15 Dec)</td><td>Demo video; presentation; rehearsals; offline backup</td><td>Video, deck, tested offline demo</td></tr>
+</table>
+<table class="gantt">
+  <tr><th>Workstream</th><th>D0</th><th>W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th><th>W6</th></tr>
+  <tr><td>Data pull and census</td><td class="on"></td><td class="on"></td><td class="on"></td><td></td><td></td><td class="lt"></td><td></td></tr>
+  <tr><td>Trust layer (matching, confidence, undercount)</td><td></td><td class="lt"></td><td class="on"></td><td class="lt"></td><td></td><td></td><td></td></tr>
+  <tr><td>Forecast and need sizing</td><td></td><td></td><td class="on"></td><td class="on"></td><td></td><td class="lt"></td><td></td></tr>
+  <tr><td>Gap, norms, viability, siting</td><td></td><td class="lt"></td><td></td><td class="on"></td><td class="lt"></td><td></td><td></td></tr>
+  <tr><td>API, map, dashboard</td><td></td><td class="lt"></td><td class="lt"></td><td class="lt"></td><td class="on"></td><td class="lt"></td><td></td></tr>
+  <tr><td>Second state (Karnataka)</td><td class="lt"></td><td></td><td></td><td></td><td></td><td class="on"></td><td></td></tr>
+  <tr><td>Validation and documents</td><td></td><td></td><td class="lt"></td><td class="lt"></td><td class="lt"></td><td class="on"></td><td></td></tr>
+  <tr><td>Video, deck, rehearsal</td><td></td><td></td><td></td><td></td><td></td><td class="lt"></td><td class="on"></td></tr>
+</table>
+<p class="small">Dark cells: main focus that week. Light cells: lighter work (data download, early prototype, documentation alongside the build).</p>
+
+<h3>11.7 Scope priorities</h3>
 <table>
   <tr><th>Priority</th><th>Items</th></tr>
   <tr><td><b>Must</b></td><td>Census with confidence, undercount estimate and reconciliation waterfall; Effective Supply; norm engine with version switch; Gap Index on fixed scales; need module (energy + queue + corridor); <b>viability layer and Allocation Advisor</b>; siting with Decision Cards; national state-level map plus Odisha in depth; dashboard with scenarios</td></tr>
   <tr><td><b>Should</b></td><td>Karnataka as the second state; drive-time access; tornado chart; ML demand disaggregation (with population-weight fallback)</td></tr>
   <tr><td><b>Could</b></td><td>Range-Safety Index for NH-16; home-charging-adjusted public share (with documented default shares as fallback); mobile verification form</td></tr>
   <tr><td><b>Roadmap only</b></td><td>Live OCPI feeds, DISCOM capacity data, national refresh automation</td></tr>
-</table>
-<table>
-  <tr><th>Week</th><th>Focus</th><th>Output</th></tr>
-  <tr><td>W1 (7–13 Nov)</td><td>Schema; ingestion; dedupe; <b>vertical slice end to end</b> (one district, basic map and card); label 500 match pairs</td><td>Working skeleton; first census</td></tr>
-  <tr><td>W2 (14–20 Nov)</td><td>Confidence, undercount and waterfall; Effective Supply; monthly VAHAN extraction; forecast</td><td>Reconciliation chart; three-scenario need tables</td></tr>
-  <tr><td>W3 (21–27 Nov)</td><td>Gap Index and norm engine; need module; viability layer; siting; validation suite</td><td>Ranked sites; validation report</td></tr>
-  <tr><td>W4 (28 Nov – 4 Dec)</td><td>Allocation Advisor; dashboard and Decision Cards polished; national state-level layer</td><td>Feature-complete platform for Odisha</td></tr>
-  <tr><td>W5 (5–11 Dec)</td><td>Karnataka run; methodology document and Method Cards; scalability roadmap and finance appendix</td><td>Two-state platform and documents</td></tr>
-  <tr><td>W6 (12–15 Dec)</td><td>Demo video; rehearsal; buffer</td><td>Video and final deck</td></tr>
 </table>
 <table>
   <tr><th>Role</th><th>Owner</th><th>Responsibilities</th></tr>
@@ -363,8 +446,36 @@ Public share(seg, hex) = 1 − (home- or depot-feasible share × home-charging p
   <tr><td>Front end and dashboard</td><td>[name]</td><td>React + MapLibre, dashboard, Decision Cards, exports</td></tr>
   <tr><td>Documentation and demo (Team Leader)</td><td>Shrimon Mishra</td><td>Methodology document, Method Cards, video, presentation</td></tr>
 </table>
-<p><b>Tools.</b> Python (pandas, GeoPandas, scikit-learn/LightGBM, statsmodels), PostgreSQL/PostGIS, H3, OSRM, FastAPI, React, MapLibre GL, ECharts, PMTiles. Streamlit is the fallback front end if time runs short. Code in Git with a reproducible run per data snapshot.</p>
+<p class="small">Working rhythm: a 15-minute sync twice a week, a shared task board, and a demo of the current build to the whole team every Sunday.</p>
+
+<h3>11.8 Testing and quality assurance</h3>
+<ul>
+  <li><b>Data tests</b> on every run: row counts, coordinates inside India and inside the right district, duplicate rate, missing-attribute rate.</li>
+  <li><b>Model tests:</b> matching precision/recall on held-out pairs; forecast rolling backtest; leave-one-district-out demand error; hold-out siting recovery.</li>
+  <li><b>Regression tests:</b> the pilot's Baleshwar example and the Odisha cost tables (§10) must reproduce exactly.</li>
+  <li><b>Reproducibility:</b> the same snapshot and run ID give identical outputs on two laptops.</li>
+  <li><b>User test:</b> two people outside the team each try the dashboard with three tasks ("find the worst district", "explain this site", "change the scenario"); we fix whatever slows them down.</li>
+</ul>
+
+<h3>11.9 Finale readiness</h3>
+<ul>
+  <li><b>Three ways to demo:</b> live on the hosted version; the same build running offline on the presenting laptop (Docker, cached tiles); and the recorded video if both fail.</li>
+  <li><b>Roadmap-evolution log:</b> we keep a dated change log from this Round 1 plan, so the walkthrough the finale requires ("how the solution evolved from the Round 1 roadmap") is ready and honest.</li>
+  <li><b>Q&amp;A preparation:</b> a one-page answer sheet for the questions we expect (data gaps, utilisation assumptions, why Odisha, how it scales, AI use), each pointing to a Method Card.</li>
+</ul>
 <div class="box"><b>Five-minute demo story.</b> (1) Two official numbers disagree: show the waterfall and the undercount layer. (2) Switch raw count to Effective Supply and watch a district turn red. (3) Switch the norm version and the adoption scenario. (4) Open a Decision Card and show ₹ per EV served. (5) Show the Market/Support/Mandate split, then drive an e-car along NH-16 and show where it gets stranded.</div>
+
+<h3>11.10 Schedule risks and fallbacks</h3>
+<table>
+  <tr><th>If this slips…</th><th>…we do this instead</th></tr>
+  <tr><td>Monthly VAHAN extraction takes too long</td><td>Use the annual series already pulled in the pilot; add monthly data for Odisha only</td></tr>
+  <tr><td>Matching model underperforms</td><td>Rule-based matching on distance + operator + connector (pilot method), with uncertain pairs flagged</td></tr>
+  <tr><td>ML demand spread is not better than the simple method</td><td>Population and built-up-area weights, labelled "modelled"</td></tr>
+  <tr><td>React front end is late</td><td>Streamlit + Folium front end on the same API</td></tr>
+  <tr><td>Karnataka run is incomplete</td><td>Show Karnataka at district level only; Odisha stays in full depth</td></tr>
+  <tr><td>Operator data never arrives</td><td>Documented synthetic sample, clearly flagged, so the method still demonstrates</td></tr>
+  <tr><td>Venue internet fails</td><td>Offline laptop build, then recorded video</td></tr>
+</table>
 
 <h2>12. Scalability roadmap (5 years)</h2>
 <p>The roadmap is data-driven in two ways: each stage is gated by metrics the platform computes, and the order of expansion is chosen by a score the platform produces.</p>
