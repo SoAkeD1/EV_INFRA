@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>EV Infra Map India: Methodology and Implementation Roadmap</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root { --ink:#1b1f24; --muted:#5b6470; --line:#d5dae0; --accent:#0b6e4f; --accent-soft:#e7f3ee; --warn:#8a5a00; --warn-soft:#fff6e0; }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Arial, "Liberation Sans", sans-serif; color: var(--ink); background:#fff; font-size: 10.2pt; line-height: 1.45; margin: 0; }
+  h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 6px; color: var(--accent); }
+  h2 { font-size: 14pt; margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); break-after: avoid; }
+  h3 { font-size: 11.2pt; margin: 14px 0 6px; break-after: avoid; }
+  p { margin: 0 0 7px; }
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 9pt; break-inside: auto; }
+  tr { break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: var(--accent-soft); font-weight: 700; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  .subtitle { color: var(--muted); font-size: 11pt; margin-bottom: 14px; }
+  .box { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: #fafbfc; padding: 8px 12px; margin: 8px 0 12px; break-inside: avoid; }
+  .note { border-left-color: var(--warn); background: var(--warn-soft); }
+  .formula { font-family: "DejaVu Sans Mono", Consolas, monospace; font-size: 9.2pt; background: #f3f5f7; padding: 6px 10px; border-radius: 4px; margin: 4px 0 8px; display: block; white-space: pre-wrap; }
+  .team td { font-size: 10pt; }
+  .team th { width: 28%; }
+  .pagebreak { break-before: page; }
+  .small { font-size: 8.8pt; color: var(--muted); }
+  .arch { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 8px 0 12px; }
+  .arch div { border: 1px solid var(--accent); border-radius: 6px; padding: 6px; font-size: 8.6pt; background: var(--accent-soft); }
+  .arch b { display: block; font-size: 9.2pt; margin-bottom: 2px; }
+  .toc { columns: 2; font-size: 9.6pt; margin: 6px 0 0; }
+</style>
+</head>
+<body>
+
+<h1>EV Infra Map India</h1>
+<div class="subtitle">A Charging Infrastructure Decision System for India: Methodology and Implementation Roadmap<br>
+Techfest 2026-27, IIT Bombay · EV Infra &amp; Green Mobility AI Challenge · Challenge 1</div>
+
+<table class="team">
+  <tr><th>Team name</th><td>Havoc</td></tr>
+  <tr><th>Team ID</th><td>[fill in]</td></tr>
+  <tr><th>Institution</th><td>[fill in]</td></tr>
+  <tr><th>Team Leader (submitting)</th><td>[name] · [email] · [phone]</td></tr>
+  <tr><th>Members</th><td>[name, role] · [name, role] · [name, role] · [name, role]</td></tr>
+</table>
+
+<div class="toc">
+1. Executive summary<br>2. Problem understanding and users<br>3. Evidence from our pilot<br>4. Solution overview<br>5. Data strategy<br>6. Charger types and compatibility<br>7. Analytical methodology<br>8. Where AI is used<br>9. Deliverables<br>10. Costs, subsidy logic and unit economics<br>11. Implementation roadmap to the Grand Finale<br>12. Scalability roadmap (5 years)<br>13. Risk register<br>14. Assumptions, limitations and disclosures
+</div>
+
+<h2>1. Executive summary</h2>
+<p>A charger map, a gap heat-map and a forecast all answer the question <i>"what exists?"</i>. The Ministry of Heavy Industries (MHI), ICAT and state agencies face a harder one: <b>"Where should the next rupee of public money go, and how will we know it worked?"</b></p>
+<p>We are building a <b>Charging Infrastructure Decision System</b>. The national GIS map is one view of it. The system does four jobs that officials actually have to do:</p>
+<ol>
+  <li><b>Trust the data.</b> Reconcile conflicting official counts (27,737 vs 52,718 stations nationally; 2,400 / 5,765 / 6,805 for Karnataka) into one auditable census. Every record and every hex carries a confidence score, and every district carries an estimate of how many chargers are still missing.</li>
+  <li><b>Measure honestly.</b> Count only supply that is <i>usable by the vehicles that exist</i> (working probability, connector compatibility, deliverable power, access hours), not raw plugs.</li>
+  <li><b>Separate need from viability.</b> Show where chargers are needed <i>and</i> where no private operator will build them without support. That is where public money adds most.</li>
+  <li><b>Make every decision explainable.</b> Each recommendation comes with a Decision Card: data lineage, confidence, rupees per EV served, and what would change the answer.</li>
+</ol>
+<p>Our four headline differentiators, all built for the Grand Finale: <b>Effective Supply</b>, the <b>Trust Layer</b> (confidence, reconciliation and undercount estimation), the <b>Market-vs-Mandate viability split with a PM E-DRIVE Allocation Advisor</b>, and a <b>policy-versioned norm engine</b>. The demonstration geography is <b>Odisha</b> (data-sparse, high need) in depth, contrasted with <b>Karnataka</b> (data-rich), on top of a national state-level view.</p>
+
+<h2>2. Problem understanding and users</h2>
+<p>The problem statement names three goals: assess national coverage, identify underserved regions, and align future deployment with actual vehicle populations. We translate each into the question an official asks in a review meeting.</p>
+<table>
+  <tr><th>Stakeholder</th><th>Real question</th><th>What makes them trust and reuse the tool</th></tr>
+  <tr><td>MHI (PM E-DRIVE owner)</td><td>How should the ₹2,000 crore public-charging outlay (about 72,300 chargers) be split across states and cities? Is it working?</td><td>Ranked, defensible allocation with rupees per EV served; a sanctioned-vs-installed-vs-effective tracker updated monthly</td></tr>
+  <tr><td>ICAT / test agencies</td><td>Is the method transparent, reproducible and technically sound? Can charger test and certification data plug in?</td><td>Open method, versioned runs, validation report, a certified-charger flag</td></tr>
+  <tr><td>BEE / MoP / state nodal agencies</td><td>One trusted charger census. Are the spacing norms met?</td><td>Reconciled counts, norm compliance by city and corridor, confidence flags</td></tr>
+  <tr><td>State transport departments</td><td>Which districts and cities need what, by when, under different adoption scenarios?</td><td>District need tables, scenario sliders, downloadable site lists</td></tr>
+  <tr><td>DISCOMs</td><td>Where will EV load land, and how much?</td><td>kW added per substation area; grid-aware ranking</td></tr>
+  <tr><td>MoRTH / NHAI</td><td>Are highways usable by EV cars, buses and trucks?</td><td>Corridor readiness by NH segment; where a vehicle gets stranded</td></tr>
+  <tr><td>Urban local bodies / MoHUA</td><td>Which public land parcels should we offer?</td><td>Uncovered cells and ranked candidate parcels</td></tr>
+</table>
+<p>India already has charger locator apps (BEE's EV Yatra portal and operator apps), and a national unified charging app is planned under PM E-DRIVE. We do not build another locator. We build the <b>planning and decision layer</b> that sits on top of these sources and is designed to ingest them.</p>
+
+<h2>3. Evidence from our pilot (Odisha and Karnataka)</h2>
+<p>We ran an early version of the pipeline on real VAHAN data for Odisha and Karnataka (Karnataka FY25 EV registrations of 174,003 match the reported 1.73 lakh). Six findings shaped this design:</p>
+<table>
+  <tr><th>#</th><th>Pilot finding</th><th>Design response</th></tr>
+  <tr><td>1</td><td>Official counts conflict by up to 2.8× (Karnataka 2,400 vs 6,805; national 27,737 vs 52,718), mainly because of scope differences (stations vs points, OMC vs all, public vs captive).</td><td>Reconciliation waterfall and a single schema with visibility classes (§5).</td></tr>
+  <tr><td>2</td><td>Our open-data census captured about 38% of the official count in Odisha and about 6% in Karnataka. Scaling every district by one completeness factor hides where the missing chargers are.</td><td>Multi-source census plus a capture–recapture estimate of the undercount per district (§5.3). Ranges, not points, whenever completeness is below 70%.</td></tr>
+  <tr><td>3</td><td>Observed fast-charger utilisation is 1–5%, against the 4 h/day (~17%) we first assumed for sizing.</td><td>Energy-based sizing kept for need; a separate viability layer decides who pays (§7.7, §10).</td></tr>
+  <tr><td>4</td><td>VAHAN-derived stock in Odisha is ~25% below the state figure (1.64 vs 2.19 lakh); unregistered e-rickshaws are missed.</td><td>Reconciliation to state figures and an explicit informal e-rickshaw uplift range.</td></tr>
+  <tr><td>5</td><td>By count, Odisha's DC gap is about zero (188 existing vs 115 needed on energy), yet NH-16 has stretches of up to 49 km without a charger.</td><td>Gap reported by segment, class and location, not just count; corridor model (§7.6).</td></tr>
+  <tr><td>6</td><td>Public-charging shares were assumptions (2W 10%, e-auto 30%, 4W 20%) and drove the whole need estimate.</td><td>Public share derived from home-charging feasibility and treated as the top sensitivity (§7.3).</td></tr>
+</table>
+
+<h2>4. Solution overview</h2>
+<div class="arch">
+  <div><b>1. Ingest</b>VAHAN, BEE/MoP, OCM, OSM, operator locators, OMC outlets, scheme lists, Census, WorldPop, OSM roads, substations</div>
+  <div><b>2. Census</b>Normalise → block → match (ML) → cluster → confidence → undercount estimate → reconcile</div>
+  <div><b>3. Analytics</b>Effective Supply, demand and forecast, need sizing, Gap Index, norm compliance, viability, siting</div>
+  <div><b>4. Decisions</b>Decision Cards, Allocation Advisor, scenario and norm versions, uncertainty bands</div>
+  <div><b>5. Delivery</b>National map, dashboard, Allocation Note export, open GeoJSON/OGC layers</div>
+</div>
+<p>Every output is stamped with its <b>data snapshot date, norm version and scenario</b>, and every run can be reproduced from its run ID.</p>
+
+<h2>5. Data strategy</h2>
+<p>The problem statement allows open, sample or realistic synthetic data as long as everything is documented. We follow a <b>data readiness ladder</b>: T0 open on day one, T1 official public documents, T2 data contracts/MoUs, T3 live operational feeds. Every record carries flags (<code>is_synthetic</code>, <code>is_imputed</code>, <code>is_assumed</code>).</p>
+<table>
+  <tr><th>Layer</th><th>Sources</th><th>Used for</th><th>Tier</th></tr>
+  <tr><td>EV registrations</td><td>VAHAN dashboard (RTO × vehicle class × fuel × month); state transport figures; FADA/SIAM retail data as a cross-check</td><td>Demand by class, growth, forecast</td><td>T0</td></tr>
+  <tr><td>Official charger counts</td><td>BEE / EV Yatra; MoP and MHI statements; Parliament replies; PM E-DRIVE and FAME-II sanctioned lists; state nodal agency lists</td><td>Reconciliation target; sanctioned-vs-installed tracking</td><td>T1</td></tr>
+  <tr><td>Open charger data</td><td>OpenChargeMap; OpenStreetMap (<code>amenity=charging_station</code> with socket tags)</td><td>Base census</td><td>T0</td></tr>
+  <tr><td>Operator and OEM networks</td><td>Public locators of charge point operators, OEM networks and swap operators, used only where their terms allow; otherwise via data contract</td><td>Completeness, connector types, uptime</td><td>T2</td></tr>
+  <tr><td>Fuel retail outlets</td><td>OMC retail outlet lists (IOCL, BPCL, HPCL)</td><td>Candidate sites with land, power and highway access</td><td>T1</td></tr>
+  <tr><td>Roads and highways</td><td>OSM road graph; NHAI network and toll plazas; published traffic counts; PM Gati Shakti layers</td><td>Corridor model, drive-time access, range safety</td><td>T0/T1</td></tr>
+  <tr><td>Grid</td><td>OSM substations; CEA and state transmission data; SERC EV tariff orders; DISCOM EV connection counts</td><td>Grid proxy; load added per area</td><td>T0 proxy; T2/T3 actuals</td></tr>
+  <tr><td>Demographic and economic</td><td>Census 2011 with projections; Census/NSS housing tables; WorldPop; GHSL; VIIRS night-lights; open building footprints; OSM POIs</td><td>Spatial spread of demand; home-charging feasibility</td><td>T0</td></tr>
+  <tr><td>Contextual (tourism, logistics, land use)</td><td>Tourist circuits (e.g. Puri–Konark–Bhubaneswar), logistics hubs, industrial areas, OSM land use, transit and government land</td><td>Demand uplift; candidate public land</td><td>T0/T1</td></tr>
+  <tr><td>Public fleets</td><td>PM e-Bus Sewa and state transport undertakings' depots</td><td>Depot and corridor load</td><td>T1/T2</td></tr>
+  <tr><td>Policy</td><td>MoP Guidelines for EV charging infrastructure (17 Sep 2024) and earlier versions; state EV policies</td><td>Norm engine; scenario inputs</td><td>T0</td></tr>
+</table>
+
+<h3>5.1 Census construction</h3>
+<ol>
+  <li><b>Ingest</b> each source into an immutable raw snapshot with a snapshot ID and date.</li>
+  <li><b>Normalise</b> to one schema: site ID; all source IDs; lat/lon; visibility class; operator; port ID; connector; AC/DC; rated kW; supported vehicle classes; hours; status; last-verified date; confidence; flags.</li>
+  <li><b>Block</b> candidate duplicates by geohash-7 cell (~150 m) <b>and its eight neighbours</b>, so duplicates that straddle a cell edge are not missed.</li>
+  <li><b>Match</b> candidate pairs with a learned classifier (§8) on distance, operator, connector set, power and name similarity. Names only break ties.</li>
+  <li><b>Cluster</b> matched records (union-find) into sites and keep the most complete attributes.</li>
+  <li><b>Score</b> confidence, estimate the undercount, and <b>reconcile</b> to official counts with a published bridge.</li>
+</ol>
+<p><b>Visibility classes.</b> P1 public 24×7; P2 public, restricted hours; S semi-public (mall, hotel, customers only); C captive company/OEM; F fleet depot; H home/housing society. P1 and P2 count fully as public supply; S counts partially; C, F and H are kept as context and to net out demand (an area full of captive depots needs less public supply).</p>
+
+<h3>5.2 Confidence score (false positives)</h3>
+<span class="formula">Confidence = [1 − Π(1 − r_s) over agreeing source groups] × exp(−age / τ) × attribute completeness</span>
+<p>r_s is a reliability prior per source (e.g. 0.5 crowd-sourced, 0.8 operator feed, 0.95 field-verified) and τ is a decay constant (12 months). Sources that copy each other (OCM and OSM often share records) are grouped and counted <b>once</b>, so copied records cannot inflate confidence. Priors are flagged assumptions, tunable and shown in the Method Card.</p>
+
+<h3>5.3 Undercount estimate (false negatives)</h3>
+<p>Confidence only rates the chargers we have found. The larger risk is the ones we have not found. For each district we estimate total chargers by <b>capture–recapture</b> across independent source groups (Lincoln–Petersen, or Chao's estimator when there are more than two groups):</p>
+<span class="formula">N̂ = (n₁ × n₂) / m     n₁, n₂ = chargers found by each source group; m = chargers found by both</span>
+<p>The estimate is checked against the official count where one exists. The map shows a <b>"what we don't know" layer</b>: districts where the estimated missing share is high, so gaps there are reported as ranges and pushed up the verification queue.</p>
+
+<h3>5.4 Reconciliation waterfall and verification queue</h3>
+<p>A waterfall chart bridges official counts step by step (OMC-only stations → all public stations → points vs stations → captive and semi-public → date differences), turning a disagreement into an auditable explanation. A verification queue ranks sites and districts by <i>uncertainty × decision impact</i>, so a state agency verifies the 200 records that matter most rather than 20,000. Results feed back through a Beta-distribution update of each site's working probability.</p>
+
+<h2>6. Charger types and compatibility</h2>
+<p>Supply is only supply for vehicles that can use it. Connector names follow the Indian standards (BIS IS 17017 series) and the MoP guidelines.</p>
+<table>
+  <tr><th>Charger / connector</th><th>Typical power</th><th>AC/DC</th><th>Main users</th><th>Notes</th></tr>
+  <tr><td>15 A socket (IEC 60309 industrial / household)</td><td>~3.3 kW</td><td>AC</td><td>e-2W, e-rickshaw, e-3W; some 4W via portable charger</td><td>Common at shops, depots and homes</td></tr>
+  <tr><td>Bharat AC-001</td><td>3 × 3.3 kW</td><td>AC</td><td>2W, 3W, some 4W</td><td>Three 15 A outputs; widely used for light EVs</td></tr>
+  <tr><td>Type 2</td><td>7.4–22 kW</td><td>AC</td><td>4W</td><td>Standard public AC for cars; most cars accept 7.2–11 kW</td></tr>
+  <tr><td>Bharat DC-001 (GB/T)</td><td>~15 kW</td><td>DC</td><td>Early 4W fleet models</td><td>Legacy; small installed base</td></tr>
+  <tr><td>CCS2</td><td>30–360 kW</td><td>DC</td><td>4W, e-buses, e-trucks</td><td>Mainstream fast standard</td></tr>
+  <tr><td>CHAdeMO</td><td>~50 kW</td><td>DC</td><td>A few imported 4W</td><td>Legacy tag</td></tr>
+  <tr><td>LECCS (light-EV combined AC/DC)</td><td>Low-power AC/DC</td><td>AC/DC</td><td>2W, 3W</td><td>Light-EV standard; key for 2W/3W</td></tr>
+  <tr><td>Type 6 (light-EV DC)</td><td>Low-power DC</td><td>DC</td><td>Light EVs</td><td>Light-EV fast DC</td></tr>
+  <tr><td>Battery swap</td><td>Pack kWh per swap</td><td>n/a</td><td>2W, 3W, some 4W</td><td>Energy access point: swaps/day × pack kWh</td></tr>
+</table>
+<p><b>Compatibility weights</b> (draft; versioned data, reviewed yearly):</p>
+<table>
+  <tr><th>Segment</th><th>Native (1.0)</th><th>Partial / adapter (0.3–0.6)</th><th>Not usable (0)</th></tr>
+  <tr><td>e-2W</td><td>15 A socket, Bharat AC-001, LECCS, Type 6, swap</td><td>Type 2 AC (only with a suitable socket)</td><td>CCS2, CHAdeMO, Bharat DC-001</td></tr>
+  <tr><td>e-rickshaw / e-auto (L3/L5 passenger)</td><td>15 A socket, Bharat AC-001, LECCS, swap</td><td>Type 6</td><td>CCS2, CHAdeMO, Bharat DC-001, Type 2 tethered</td></tr>
+  <tr><td>3W cargo (L5)</td><td>LECCS, Bharat AC-001, 15 A socket</td><td>Type 2 (where fitted)</td><td>CCS2 (most models), CHAdeMO, Bharat DC-001</td></tr>
+  <tr><td>4W car</td><td>Type 2 AC, CCS2</td><td>15 A socket (portable charger), Bharat DC-001 / CHAdeMO (legacy models)</td><td>LECCS, Type 6</td></tr>
+  <tr><td>e-bus</td><td>CCS2 (high power), depot charging</td><td>GB/T (legacy fleets)</td><td>All light-EV and AC slow connectors</td></tr>
+  <tr><td>e-truck</td><td>High-power CCS2</td><td>none today</td><td>All others</td></tr>
+</table>
+
+<h2>7. Analytical methodology</h2>
+
+<h3>7.1 Effective Supply (ES)</h3>
+<p>We replace "number of chargers" with Effective Supply: usable kW for a given vehicle segment at a given location.</p>
+<span class="formula">ES(seg, hex) = Σ over ports p in hex [ min(kW_p, kW_accept(seg)) × P_work(p) × compat(seg, connector_p) × hours_p × access_p ]</span>
+<ul>
+  <li><b>min(kW_p, kW_accept)</b>: deliverable power. A 7.4 kW-limited car on a 22 kW AC point uses a third of it.</li>
+  <li><b>P_work</b>: working probability, starting from a prior by operator and source recency and updated by verification.</li>
+  <li><b>compat</b>: the matrix in §6. <b>hours</b>: share of the day the port is open. <b>access</b>: 1 for public, less than 1 or 0 for semi-public or captive.</li>
+</ul>
+<p><b>Demo moment:</b> toggle "raw count" to "Effective Supply" and watch a district turn from green to red.</p>
+
+<h3>7.2 EV stock</h3>
+<p>Stock by segment = cumulative VAHAN registrations minus segment-specific attrition, reconciled to state transport figures, plus an explicit uplift range for unregistered e-rickshaws. Registration RTO is not where a vehicle is used, so hex-level demand is labelled <b>modelled</b> and carries an uncertainty band (§8).</p>
+
+<h3>7.3 Public-charging demand (home-charging adjusted)</h3>
+<span class="formula">Energy(seg, hex) = stock × km/day × Wh/km
+Public share(seg, hex) = 1 − (home- or depot-feasible share × home-charging preference)</span>
+<p>Home feasibility comes from dwelling type, own parking, apartment share and fleet use (fleets use depots; cars parked at apartments often cannot plug in at home). Proxies: Census/NSS housing tables, building footprints and density indicators, calibrated against any operator session data obtained. This replaces the most arbitrary input in our pilot with something derived from data, and it explains why dense cities need more public chargers per EV than small towns.</p>
+
+<h3>7.4 Forecast</h3>
+<ul>
+  <li>A diffusion model (logistic/Bass) fitted to <b>monthly</b> VAHAN series per state and segment, pooled hierarchically so short state series borrow strength from the national curve.</li>
+  <li><b>Segment-specific saturation levels</b>, not one cap. Reference points are NITI Aayog's 2030 aspirations (about 80% of 2W/3W sales, 70% of commercial cars, 30% of private cars, 40% of buses). Note that e-rickshaws are already the majority of L3 three-wheelers, so a single 30% ceiling would badly under-forecast 3W.</li>
+  <li>Low / Base / High scenarios plus policy-shock cases (subsidy withdrawal or extension). The High scenario is labelled an upper bound where it rests on draft policy.</li>
+  <li>Outputs are shown as prediction bands, not just three lines.</li>
+</ul>
+
+<h3>7.5 Need sizing</h3>
+<ol>
+  <li><b>Peak demand:</b> daily public energy × peak-hour share (8–12%).</li>
+  <li><b>Ports by queueing:</b> an Erlang-C model sizes ports so the probability of waiting stays below a target (e.g. 10%).</li>
+  <li><b>Split by class:</b> light/AC ports for 2W, 3W and slow 4W; DC ports for fast 4W and commercial; depot energy for buses.</li>
+</ol>
+
+<h3>7.6 Corridor model</h3>
+<p>DC need on a corridor = max(norm-spacing sites, flow-based sites), where flow-based need = through-traffic × EV share × share needing a charge × dwell time. We use published NH traffic counts where available, otherwise a clearly flagged gravity-model proxy. Existing DC sites within 1 km of the corridor are netted off before any new site is proposed. A <b>Highway Range-Safety Index</b> simulates a typical e-car (real range ~250 km, charging 20–80%) along each NH segment and shows where it gets stranded and the single next site that most improves the corridor (demo: Bhubaneswar → Kolkata on NH-16).</p>
+
+<h3>7.7 Gap Index and norm engine</h3>
+<ul>
+  <li><b>Gap = need − Effective Supply</b>, by segment and charger class, never raw count.</li>
+  <li>The Gap Index combines three lenses: norm compliance, demand-to-supply, and drive-time access (OSRM isochrones, % population within 5 / 10 / 20 minutes of a working fast charger). It uses <b>fixed reference scales</b> anchored to norms and benchmarks, not min-max across the sample, so a district can be compared over time and with states added later.</li>
+  <li><b>Policy-versioned norm engine:</b> norms are stored as data (version, effective date, urban grid, highway spacing, heavy-duty spacing). The active version is the MoP 2024 guidelines (one station per 1 km × 1 km urban grid, every 20 km along highways, every 100 km for long-range and heavy-duty vehicles). The earlier 3 km × 3 km / 25 km version and state-specific norms can be switched in, and compliance is recomputed instantly. The version in use is shown on every screen.</li>
+</ul>
+
+<h3>7.8 Viability: Market, Support or Mandate</h3>
+<p>Every hex and corridor segment with a gap gets one label:</p>
+<ul>
+  <li><b>Market:</b> expected utilisation above break-even. Private operators will build; no subsidy needed.</li>
+  <li><b>Support:</b> need exists but expected utilisation is below break-even. The support needed is computed site by site as the viability gap (§10.4), not a flat percentage.</li>
+  <li><b>Mandate:</b> coverage required by norms or equity even though utilisation will stay very low. These sites need capital <i>and</i> operating support, or a mandate on a public operator such as an OMC.</li>
+</ul>
+
+<h3>7.9 Siting and the Allocation Advisor</h3>
+<p>A maximal covering location model with a budget constraint selects sites from candidates (OMC outlets, malls, parking, government and transit land), with a grid-distance penalty. The <b>PM E-DRIVE Allocation Advisor</b> ranks picks by <b>EVs served per rupee of public money</b> and produces a state-wise allocation within the budget. Subsidy parameters are configurable and default to the scheme's notified rates (including how upstream infrastructure is treated), so the advisor follows the scheme's real design.</p>
+<div class="box"><b>Decision Card (example).</b> "Rank 4 because 3,100 uncovered EVs within 5 km; nearest working fast charger 38 km away; substation 1.2 km; label: Support; public money needed ₹X; confidence 0.62. Would drop out of the top 10 if the public share for 4W fell below 15%."</div>
+
+<h3>7.10 Validation</h3>
+<ul>
+  <li>Rolling-origin backtest of the forecast (target MAPE below 20%).</li>
+  <li>Leave-one-district-out validation of the demand disaggregation (§8).</li>
+  <li>Hold-out siting test: hide 30% of existing chargers and measure how many the model recovers (a sanity check, not an accuracy claim).</li>
+  <li>Tornado-chart sensitivity on every assumed parameter, shown in the dashboard.</li>
+  <li>The pilot's worked Baleshwar example is kept as a regression test.</li>
+</ul>
+
+<h2>8. Where AI is used</h2>
+<p>We use AI where it beats rules and keep it auditable. Every AI output is labelled as modelled and has a human check.</p>
+<table>
+  <tr><th>Task</th><th>Method</th><th>How we keep it honest</th></tr>
+  <tr><td>Charger de-duplication across sources</td><td>Gradient-boosted classifier on pair features (distance, operator, connector set, power, name similarity), trained on ~500 hand-labelled pairs</td><td>Precision/recall reported; uncertain pairs go to the verification queue</td></tr>
+  <tr><td>Extracting charger lists from official PDFs (Parliament replies, state lists, sanction orders)</td><td>LLM-assisted table extraction into the schema</td><td>Every extracted row links to its source page; human spot-check of each document before use</td></tr>
+  <tr><td>Spreading VAHAN RTO counts onto hexes</td><td>Gradient-boosted regression on WorldPop, night-lights, building footprints, POIs and road density, trained where DISCOM EV connections or charger session data exist</td><td>Leave-one-district-out error published; output labelled "modelled" with bands</td></tr>
+  <tr><td>Undercount estimation</td><td>Capture–recapture across source groups (§5.3)</td><td>Checked against official counts where they exist</td></tr>
+  <tr><td>Forecasting</td><td>Hierarchical diffusion model (§7.4)</td><td>Rolling backtest; prediction bands</td></tr>
+</table>
+
+<h2>9. Deliverables</h2>
+<table>
+  <tr><th>PS deliverable</th><th>What we build</th></tr>
+  <tr><td>Functional prototype / web platform</td><td>One web application with three personas (national planner, state planner, DISCOM/ULB). Python ETL → PostgreSQL/PostGIS → analytics jobs → FastAPI (REST + GeoJSON) → React + MapLibre front end with pre-computed vector tiles. Governance-ready design: role-based access, audit log, GIGW accessibility, aggregated data only.</td></tr>
+  <tr><td>Interactive national GIS map</td><td>Zoom-dependent aggregation: state → district → H3 hexes → individual sites. H3 resolution 7 (~5 km², ~640,000 cells nationally), with resolution 8 inside built-up areas only. Layers: chargers by class, Effective Supply, Gap Index, norm compliance, highway readiness, EV density, confidence and undercount, substations, candidate sites, PM E-DRIVE sanctioned vs installed. Click any hex for its Decision Card; export the view as GeoJSON/CSV.</td></tr>
+  <tr><td>Analytical methodology document</td><td>Written for ICAT-style technical review, with one Method Card per metric (purpose, formula, inputs, assumptions with ranges, known biases, validation result, version) and an assumptions register.</td></tr>
+  <tr><td>Charger requirement estimation and recommendation module</td><td>For any state, district, city or corridor, scenario and year: points needed by class, gap versus Effective Supply, cost, viability label and ranked sites with Decision Cards.</td></tr>
+  <tr><td>Decision-support dashboard</td><td>Headline indicators: EVs per effective port; drive-time coverage; norm compliance; charging deserts; scenario gap in points and ₹; Market/Support/Mandate split; data confidence and estimated undercount; scheme tracker. National league table, drill-down, corridor view, "what changed since last refresh", scenario and norm sliders, tornado chart, one-click Allocation Note export.</td></tr>
+  <tr><td>Presentation / demonstration video</td><td>Odisha in depth (including NH-16 and the Puri–Konark–Bhubaneswar tourist circuit), contrasted with Karnataka, on the national view.</td></tr>
+  <tr><td>Scalability roadmap</td><td>Section 12: stages with measurable gates, a model-chosen expansion order, costs and cases.</td></tr>
+</table>
+
+<h2>10. Costs, subsidy logic and unit economics</h2>
+<p class="small">All costs are illustrative planning ranges for showing the method and the order of magnitude. Before the Grand Finale they will be replaced with tender and quotation data and current SERC EV tariffs.</p>
+
+<h3>10.1 Cost assumptions (INR, installed)</h3>
+<table>
+  <tr><th>Item</th><th class="n">Low</th><th class="n">Central</th><th class="n">High</th><th>Note</th></tr>
+  <tr><td>Light point (AC 7.4 kW / LECCS / Type 6), blended</td><td class="n">₹0.6 lakh</td><td class="n">₹1.0 lakh</td><td class="n">₹1.8 lakh</td><td>Hardware + installation + metering</td></tr>
+  <tr><td>DC 30 kW charger</td><td class="n">₹8 lakh</td><td class="n">₹10 lakh</td><td class="n">₹11 lakh</td><td>Hardware + installation</td></tr>
+  <tr><td>DC 60 kW charger</td><td class="n">₹13 lakh</td><td class="n">₹15 lakh</td><td class="n">₹18 lakh</td><td>Hardware + installation</td></tr>
+  <tr><td>Grid connection and transformer per DC site</td><td class="n">₹4 lakh</td><td class="n">₹8 lakh</td><td class="n">₹12 lakh</td><td>Strongly site-specific</td></tr>
+  <tr><td>Civil works, canopy, signage per DC site</td><td class="n">₹2 lakh</td><td class="n">₹4 lakh</td><td class="n">₹5 lakh</td><td>Land lease extra</td></tr>
+  <tr><td><b>DC highway site (2 × 60 kW), all-in</b></td><td class="n"><b>₹32 lakh</b></td><td class="n"><b>₹42 lakh</b></td><td class="n"><b>₹53 lakh</b></td><td>2 × charger + grid + civil (≈ ₹21 lakh per charger, central)</td></tr>
+  <tr><td>Annual O&amp;M</td><td colspan="3" class="n">~5% of hardware</td><td>Plus demand charges as per state tariff</td></tr>
+</table>
+
+<h3>10.2 Worked example: Odisha, FY 2029-30</h3>
+<p>Pilot outputs: Base need 2,822 light + 115 DC points (energy-based); existing, scaled to the official count, ~553 light + 188 DC; the NH-16 corridor rule gives 44 DC sites (88 points). Light and DC gaps are computed <b>separately</b>; a DC surplus is never used to offset a light-charger gap.</p>
+<table>
+  <tr><th>Component (Base)</th><th class="n">Quantity</th><th class="n">Central cost</th><th class="n">Range</th></tr>
+  <tr><td>Light gap (2,822 − 553)</td><td class="n">2,269 points</td><td class="n">₹22.7 crore</td><td class="n">₹13.6–40.8 crore</td></tr>
+  <tr><td>DC by energy (115 needed vs 188 existing)</td><td class="n">0 new by count</td><td class="n">₹0</td><td class="n">relocation question, not new build</td></tr>
+  <tr><td>NH-16 corridor DC sites</td><td class="n">≤ 44 sites</td><td class="n">≤ ₹18.5 crore</td><td class="n">₹14.1–23.3 crore</td></tr>
+  <tr><td><b>Total capex, Base</b></td><td></td><td class="n"><b>≈ ₹41 crore</b></td><td class="n"><b>≈ ₹28–64 crore</b></td></tr>
+</table>
+<p class="small">The 44 corridor sites are an upper bound. Each existing DC site already within 1 km of NH-16 removes one new site (₹42 lakh) once the census nets it off.</p>
+<p><b>Scenarios.</b> The pilot's total need is 2,510 / 2,937 / 5,376 points (Low / Base / High). Low and High are split into light and DC using the Base mix (an assumption until the model outputs the split directly). In every scenario the DC energy need (98 / 115 / 211) is covered by existing DC plus the corridor sites (188 + 88 = 276), so the DC requirement is set by the corridor, as the max(energy, corridor) rule intends.</p>
+<table>
+  <tr><th>Scenario</th><th class="n">Light gap (points)</th><th class="n">Light capex</th><th class="n">Corridor DC</th><th class="n">Total (central)</th><th class="n">Range</th></tr>
+  <tr><td>Low</td><td class="n">1,859</td><td class="n">₹18.6 crore</td><td class="n">₹18.5 crore</td><td class="n">≈ ₹37 crore</td><td class="n">₹25–57 crore</td></tr>
+  <tr><td>Base</td><td class="n">2,269</td><td class="n">₹22.7 crore</td><td class="n">₹18.5 crore</td><td class="n">≈ ₹41 crore</td><td class="n">₹28–64 crore</td></tr>
+  <tr><td>High</td><td class="n">4,612</td><td class="n">₹46.1 crore</td><td class="n">₹18.5 crore</td><td class="n">≈ ₹65 crore</td><td class="n">₹42–106 crore</td></tr>
+</table>
+<p>Two observations for MHI: (1) corridor DC cost is <b>norm-driven</b> and the same in every scenario, while light-point cost is <b>adoption-driven</b> and moves about 2.5× between Low and High; (2) as a sanity check, Odisha's PM E-DRIVE approval of 170 stations / 688 points for ₹40–50 crore is the same order of magnitude, though not like-for-like (it is mostly fast chargers and may be the subsidy portion only).</p>
+
+<h3>10.3 Unit economics of a public 60 kW DC charger</h3>
+<p>Assumptions: all-in capex <b>₹21 lakh per charger</b> (half of a 2 × 60 kW site, including grid and civil works); gross margin ₹10/kWh (tariff minus energy cost); fixed costs ₹1.25 lakh/yr (O&amp;M ₹0.75 lakh + demand/connection charges ₹0.5 lakh, which varies widely by state tariff and is waived in some states); 8% cost of capital over 8 years (capital recovery factor 0.174, i.e. ₹3.65 lakh/yr).</p>
+<table>
+  <tr><th>Utilisation (share of 24 h at full power)</th><th class="n">kWh/day</th><th class="n">Gross margin/yr</th><th class="n">Net of fixed costs/yr</th><th class="n">Simple payback on ₹21 lakh</th></tr>
+  <tr><td>2% (observed low end)</td><td class="n">29</td><td class="n">₹1.05 lakh</td><td class="n">−₹0.20 lakh</td><td class="n">never</td></tr>
+  <tr><td>5% (observed high end)</td><td class="n">72</td><td class="n">₹2.63 lakh</td><td class="n">₹1.38 lakh</td><td class="n">~15 years</td></tr>
+  <tr><td>10%</td><td class="n">144</td><td class="n">₹5.26 lakh</td><td class="n">₹4.01 lakh</td><td class="n">~5.2 years</td></tr>
+  <tr><td>15%</td><td class="n">216</td><td class="n">₹7.88 lakh</td><td class="n">₹6.63 lakh</td><td class="n">~3.2 years</td></tr>
+</table>
+<p><b>Break-even utilisation</b> including the capital charge: (3.65 + 1.25) lakh ÷ ₹10/kWh ≈ 49,000 kWh/yr ≈ 134 kWh/day ≈ <b>9.3%</b>, against observed utilisation of 1–5%. That gap is why public support is needed at all, and the model says where.</p>
+
+<h3>10.4 Support needed: the viability gap</h3>
+<table>
+  <tr><th>Expected utilisation</th><th class="n">Annual shortfall</th><th class="n">Capital-equivalent support</th><th class="n">Share of ₹21 lakh capex</th><th>Label</th></tr>
+  <tr><td>6%</td><td class="n">₹1.75 lakh</td><td class="n">₹10.1 lakh</td><td class="n">~48%</td><td>Support</td></tr>
+  <tr><td>5%</td><td class="n">₹2.28 lakh</td><td class="n">₹13.1 lakh</td><td class="n">~62%</td><td>Support</td></tr>
+  <tr><td>4%</td><td class="n">₹2.80 lakh</td><td class="n">₹16.1 lakh</td><td class="n">~77%</td><td>Support</td></tr>
+  <tr><td>2%</td><td class="n">₹3.85 lakh</td><td class="n">more than capex</td><td class="n">&gt;100%</td><td>Mandate: even a full capex grant leaves an operating loss (−₹0.2 lakh/yr)</td></tr>
+</table>
+<p>Coverage norms, not energy demand, drive many DC sites, and those sites will run at low utilisation. So more chargers are needed for coverage than energy alone justifies, and fewer of them are commercially viable. Support is sized to each site's gap; Mandate sites need capital plus operating support (viability-gap funding) or a mandate on a public operator.</p>
+
+<h3>10.5 Who pays in Odisha (Base, illustrative)</h3>
+<p>Illustrative assumptions until the model estimates them site by site: Support sites receive 50% of capex on average (corresponding to ~6% utilisation); Mandate sites receive 100% of capex plus operating support.</p>
+<table>
+  <tr><th>Class</th><th class="n">Market</th><th class="n">Support</th><th class="n">Mandate</th><th class="n">Public share of capex</th><th class="n">Public capex</th></tr>
+  <tr><td>Light points (₹22.7 crore)</td><td class="n">60%</td><td class="n">30%</td><td class="n">10%</td><td class="n">30%×50% + 10%×100% = 25%</td><td class="n">₹5.7 crore</td></tr>
+  <tr><td>NH-16 DC (₹18.5 crore)</td><td class="n">20%</td><td class="n">30%</td><td class="n">50%</td><td class="n">30%×50% + 50%×100% = 65%</td><td class="n">₹12.0 crore</td></tr>
+  <tr><td><b>Total (₹41.2 crore)</b></td><td colspan="4"></td><td class="n"><b>₹17.7 crore ≈ 43%</b></td></tr>
+</table>
+<p>Plus operating support for the ~44 Mandate DC chargers, roughly ₹0.2–0.7 lakh per charger per year at 1–2% utilisation (≈ ₹9–32 lakh/yr in total).</p>
+<p><b>The message for MHI:</b> about <b>42% of the Odisha need (by cost) can be left entirely to the market</b>, and private capital carries about 57% of total capex. Public money is concentrated on the Support and Mandate sites that private capital will not build, instead of being spread across everything.</p>
+
+<h3>10.6 Cost and value of the platform (5 years, illustrative)</h3>
+<table>
+  <tr><th>Year</th><th>Scope</th><th class="n">FTE</th><th class="n">People</th><th class="n">Cloud/data</th><th class="n">Field verification</th><th class="n">Integration, audit</th><th class="n">Total</th></tr>
+  <tr><td>Y1 (2027)</td><td>Pilot: 3–5 states; MoU with MHI/BEE</td><td class="n">8</td><td class="n">₹1.44 cr</td><td class="n">₹0.15 cr</td><td class="n">₹0.15 cr (600 sites)</td><td class="n">₹0.10 cr</td><td class="n">₹1.84 cr</td></tr>
+  <tr><td>Y2 (2028)</td><td>10–15 states, top cities, corridors</td><td class="n">14</td><td class="n">₹2.80 cr</td><td class="n">₹0.35 cr</td><td class="n">₹1.25 cr (5,000 sites)</td><td class="n">₹0.30 cr</td><td class="n">₹4.70 cr</td></tr>
+  <tr><td>Y3 (2029)</td><td>All 36 states/UTs, monthly refresh</td><td class="n">20</td><td class="n">₹4.40 cr</td><td class="n">₹0.60 cr</td><td class="n">₹2.70 cr (10,800 sites)</td><td class="n">₹0.60 cr</td><td class="n">₹8.30 cr</td></tr>
+  <tr><td>Y4 (2030)</td><td>Operate and extend (live feeds)</td><td class="n">18</td><td class="n">₹4.30 cr</td><td class="n">₹0.80 cr</td><td class="n">₹2.00 cr (8,000 sites)</td><td class="n">₹0.40 cr</td><td class="n">₹7.50 cr</td></tr>
+  <tr><td>Y5 (2031)</td><td>Operate and extend</td><td class="n">18</td><td class="n">₹4.30 cr</td><td class="n">₹0.80 cr</td><td class="n">₹2.00 cr (8,000 sites)</td><td class="n">₹0.40 cr</td><td class="n">₹7.50 cr</td></tr>
+  <tr><td colspan="7"><b>5-year total</b></td><td class="n"><b>≈ ₹30 crore</b></td></tr>
+</table>
+<p class="small">Loaded cost ₹18–24 lakh per FTE per year; field verification ₹2,500 per site including travel. Hosting on government cloud (MeghRaj/NIC) may reduce cloud costs.</p>
+<p><b>Value for money, on money the platform can actually influence.</b> PM E-DRIVE runs to March 2028 and part of its ₹2,000 crore charging outlay is already sanctioned, so the platform can influence only the uncommitted part of it in 2027–28. Over five years the addressable pool is that remainder <b>plus</b> state EV-fund charging budgets, any successor scheme, DISCOM upstream capex, and private CPO investment steered by better siting. The break-even improvement needed is the platform cost divided by that pool:</p>
+<table>
+  <tr><th>Addressable 5-year pool (assumption)</th><th class="n">₹1,000 crore</th><th class="n">₹3,000 crore</th><th class="n">₹5,000 crore</th></tr>
+  <tr><td>Allocation-efficiency gain needed to repay ₹30 crore</td><td class="n">3.0%</td><td class="n">1.0%</td><td class="n">0.6%</td></tr>
+</table>
+<p>Avoiding stranded assets and duplicate sanctions at a single Mandate-class highway site saves ₹42 lakh, so the gains needed are small compared with the money at stake.</p>
+<p><b>Funding and sustainability.</b> (a) A government-funded public good under MHI/BEE, possibly with a small monitoring-and-evaluation share of scheme disbursement; (b) state-level analytics subscriptions; (c) optional paid site-selection and benchmarking reports for CPOs, OEMs and DISCOMs, strictly separated so no commercial user gets privileged access to government data; (d) academic and open-source maintenance through ICAT-linked institutions. The platform never depends on one revenue stream.</p>
+
+<h2>11. Implementation roadmap to the Grand Finale (7 Nov – 16 Dec 2026)</h2>
+<p>We build a <b>thin end-to-end slice first</b> (census → gap → map → one Decision Card for one Odisha district) in Week 1 and deepen it every week after. That way a working demo exists from the first week and the front end is never left to the end.</p>
+<table>
+  <tr><th>Priority</th><th>Items</th></tr>
+  <tr><td><b>Must</b></td><td>Census with confidence, undercount estimate and reconciliation waterfall; Effective Supply; norm engine with version switch; Gap Index on fixed scales; need module (energy + queue + corridor); <b>viability layer and Allocation Advisor</b>; siting with Decision Cards; national state-level map plus Odisha in depth; dashboard with scenarios</td></tr>
+  <tr><td><b>Should</b></td><td>Karnataka as the second state; drive-time access; tornado chart; ML demand disaggregation (with population-weight fallback)</td></tr>
+  <tr><td><b>Could</b></td><td>Range-Safety Index for NH-16; home-charging-adjusted public share (with documented default shares as fallback); mobile verification form</td></tr>
+  <tr><td><b>Roadmap only</b></td><td>Live OCPI feeds, DISCOM capacity data, national refresh automation</td></tr>
+</table>
+<table>
+  <tr><th>Week</th><th>Focus</th><th>Output</th></tr>
+  <tr><td>W1 (7–13 Nov)</td><td>Schema; ingestion; dedupe; <b>vertical slice end to end</b> (one district, basic map and card); label 500 match pairs</td><td>Working skeleton; first census</td></tr>
+  <tr><td>W2 (14–20 Nov)</td><td>Confidence, undercount and waterfall; Effective Supply; monthly VAHAN extraction; forecast</td><td>Reconciliation chart; three-scenario need tables</td></tr>
+  <tr><td>W3 (21–27 Nov)</td><td>Gap Index and norm engine; need module; viability layer; siting; validation suite</td><td>Ranked sites; validation report</td></tr>
+  <tr><td>W4 (28 Nov – 4 Dec)</td><td>Allocation Advisor; dashboard and Decision Cards polished; national state-level layer</td><td>Feature-complete platform for Odisha</td></tr>
+  <tr><td>W5 (5–11 Dec)</td><td>Karnataka run; methodology document and Method Cards; scalability roadmap and finance appendix</td><td>Two-state platform and documents</td></tr>
+  <tr><td>W6 (12–15 Dec)</td><td>Demo video; rehearsal; buffer</td><td>Video and final deck</td></tr>
+</table>
+<table>
+  <tr><th>Role</th><th>Owner</th><th>Responsibilities</th></tr>
+  <tr><td>Data lead</td><td>[name]</td><td>Ingestion, schema, census, VAHAN extraction, reconciliation</td></tr>
+  <tr><td>Modelling lead</td><td>[name]</td><td>Matching model, demand, forecast, need sizing, viability, siting, validation</td></tr>
+  <tr><td>GIS and back end</td><td>[name]</td><td>PostGIS, H3, routing (OSRM), vector tiles, FastAPI</td></tr>
+  <tr><td>Front end and dashboard</td><td>[name]</td><td>React + MapLibre, dashboard, Decision Cards, exports</td></tr>
+  <tr><td>Documentation and demo (Team Leader)</td><td>[name]</td><td>Methodology document, Method Cards, video, presentation</td></tr>
+</table>
+<p><b>Tools.</b> Python (pandas, GeoPandas, scikit-learn/LightGBM, statsmodels), PostgreSQL/PostGIS, H3, OSRM, FastAPI, React, MapLibre GL, ECharts, PMTiles. Streamlit is the fallback front end if time runs short. Code in Git with a reproducible run per data snapshot.</p>
+<div class="box"><b>Five-minute demo story.</b> (1) Two official numbers disagree: show the waterfall and the undercount layer. (2) Switch raw count to Effective Supply and watch a district turn red. (3) Switch the norm version and the adoption scenario. (4) Open a Decision Card and show ₹ per EV served. (5) Show the Market/Support/Mandate split, then drive an e-car along NH-16 and show where it gets stranded.</div>
+
+<h2>12. Scalability roadmap (5 years)</h2>
+<p>The roadmap is data-driven in two ways: each stage is gated by metrics the platform computes, and the order of expansion is chosen by a score the platform produces.</p>
+<table>
+  <tr><th>Stage</th><th>Timing</th><th>Scope</th><th>Gate (measured by the platform)</th></tr>
+  <tr><td>S0 Prototype</td><td>Dec 2026</td><td>Odisha in depth, Karnataka for contrast, national state-level view; all deliverables in demo form</td><td>Census ≥ 60% of Odisha's official count; VAHAN gap explained; forecast backtest MAPE &lt; 20%</td></tr>
+  <tr><td>S1 Sponsor pilot</td><td>2027 (Y1)</td><td>3–5 states; MoU with MHI/BEE for official lists and a bulk VAHAN feed; first Allocation Note</td><td>Census completeness ≥ 70%; &gt; 50% of supply with confidence ≥ 0.7; at least one state nodal agency uses the Allocation Note</td></tr>
+  <tr><td>S2 Multi-state</td><td>2028 (Y2)</td><td>10–15 states, top ~50 cities, major NH corridors, e-bus depots; CPO/OEM data contract live; PM E-DRIVE tracker before the scheme ends in March 2028</td><td>Census ≥ 80%; ≥ 10 CPO/OEM feeds; ≥ 70% of top-impact records verified; forecast error stable</td></tr>
+  <tr><td>S3 National</td><td>2029 (Y3)</td><td>All 36 states/UTs; monthly refresh; Gati Shakti layers; DISCOM load module</td><td>Census ≥ 85%; data freshness ≤ 35 days; ≥ 20 states using outputs</td></tr>
+  <tr><td>S4 Live and extended</td><td>2030–31 (Y4–5)</td><td>Live OCPI-style feeds; heavy-duty and e-truck corridors; megawatt-class charging; swap parity</td><td>Live uptime for ≥ 40% of fast chargers; norm compliance reported quarterly</td></tr>
+</table>
+<p><b>Expansion order chosen by the model:</b></p>
+<span class="formula">Rollout priority(state) = 0.4 × Need (gap × EV growth) + 0.3 × Data readiness + 0.3 × Institutional readiness</span>
+<p>Weights are tunable and shown. Each wave mixes a high-need, data-sparse state (Odisha-like) with a data-rich one (Karnataka-like), so the platform is tested at both ends.</p>
+<p><b>Interoperability.</b> All outputs are published as open-standard layers (GeoJSON, OGC services) ready to overlay in PM Gati Shakti and state GIS platforms. A short OCPI-lite data contract lets CPOs and OEM networks submit data in return for benchmark reports and subsidy-eligibility evidence. Charger depots, swap stations and plug-in chargers share one energy-access schema with kWh-equivalent capacity.</p>
+
+<h3>12.1 Planning cases</h3>
+<table>
+  <tr><th>Dimension</th><th>Worst case</th><th>Base case</th><th>Best case</th></tr>
+  <tr><td>Data access</td><td>No bulk VAHAN feed; no MoU; CPOs decline</td><td>MoU for official lists and monthly VAHAN extract; ~one-third of CPOs share</td><td>Data sharing becomes a subsidy condition; live feeds; DISCOM capacity data</td></tr>
+  <tr><td>Adoption (Odisha FY30 stock)</td><td>6.8 lakh</td><td>8.3 lakh</td><td>14.4 lakh (needs a notified high-adoption policy)</td></tr>
+  <tr><td>Charger need (Odisha FY30 points)</td><td>2,510</td><td>2,937</td><td>5,376</td></tr>
+  <tr><td>States covered (Y1 / Y3 / Y5)</td><td>3 / 8 / 15</td><td>5 / 36 / 36</td><td>8 / 36 / 36</td></tr>
+  <tr><td>Census completeness (Y1 / Y3 / Y5)</td><td>50% / 60% / 65%</td><td>70% / 85% / 90%</td><td>85% / 93% / 96%</td></tr>
+  <tr><td>Annual run cost (steady state)</td><td>~₹1.2 crore (5 FTE, open data only)</td><td>~₹7.5 crore</td><td>~₹10 crore</td></tr>
+  <tr><td>What we still deliver</td><td>Ranges and confidence flags, ranked districts, transparent method</td><td>Full decision system</td><td>Decision system plus live reliability and grid load</td></tr>
+</table>
+<p>In the worst case the platform degrades gracefully: it publishes wider bands and a longer verification queue rather than false precision.</p>
+
+<h2>13. Risk register</h2>
+<table>
+  <tr><th>Risk</th><th>What could happen</th><th>Mitigation built into the design</th></tr>
+  <tr><td>VAHAN access and quality</td><td>No bulk API; captcha and terms limits; stock ~25% below state figures</td><td>Manual-assisted monthly extraction within terms; reconciliation to state figures; uncertainty bands; request a formal feed</td></tr>
+  <tr><td>Conflicting official counts</td><td>Counts differ by up to 2.8×; loss of trust</td><td>Reconciliation waterfall; published scope definitions; offer the schema to BEE</td></tr>
+  <tr><td>Hidden undercount</td><td>Missing chargers make gaps look bigger than they are</td><td>Capture–recapture estimate; "what we don't know" layer; ranges below 70% completeness</td></tr>
+  <tr><td>CPO/OEM reluctance</td><td>Competitive concern about sharing locations and uptime</td><td>Data contract with benefits; aggregated benchmarks only; public locators within terms</td></tr>
+  <tr><td>Policy volatility</td><td>Subsidy cliffs, scheme changes, draft policies not notified</td><td>Policy-shock scenarios; norm versioning; High scenario labelled an upper bound</td></tr>
+  <tr><td>Low utilisation</td><td>1–5% observed vs ~9% break-even: stranded assets</td><td>Viability layer; site-specific support sizing; deploy in tranches triggered by utilisation</td></tr>
+  <tr><td>Grid constraints</td><td>Sites that cannot be connected</td><td>Substation proxy; DISCOM data request; grid-distance penalty in siting</td></tr>
+  <tr><td>Land and permissions</td><td>Recommended site unusable</td><td>Ranked alternates per hex; OMC outlets as default candidates</td></tr>
+  <tr><td>Standards change</td><td>CCS2/LECCS/Type 6 uptake, swap growth, megawatt charging</td><td>Compatibility matrix is versioned data; yearly review with ICAT/BIS inputs</td></tr>
+  <tr><td>Informal sector</td><td>Unregistered e-rickshaws, informal charging points</td><td>Uplift range; separate light-EV and swap layers</td></tr>
+  <tr><td>Double counting</td><td>Same station in several lists; sanctioned vs installed confusion</td><td>ML matching + union-find; separate sanctioned / installed / effective status</td></tr>
+  <tr><td>Model risk and AI use</td><td>Over-confident or opaque outputs</td><td>Method Cards, uncertainty bands, published validation error, human sign-off on every Allocation Note, AI-use disclosure</td></tr>
+  <tr><td>Security and privacy</td><td>Cyber risk; obligations under the Digital Personal Data Protection Act, 2023</td><td>Aggregated vehicle counts only (no personal data); role-based access; CERT-In empanelled security audit before any government deployment</td></tr>
+  <tr><td>Build schedule</td><td>Six weeks is tight for a student team</td><td>Vertical slice in Week 1; MoSCoW scope; documented fallbacks for every Should/Could item</td></tr>
+</table>
+
+<h2>14. Assumptions, limitations and disclosures</h2>
+<ul>
+  <li><b>Pilot numbers</b> (Odisha and Karnataka) come from our Round 1 pilot run on VAHAN and open charger data; the Odisha official figure of 606 stations is unverified.</li>
+  <li><b>Costs, tariffs and subsidy intensities</b> in Section 10 are illustrative planning ranges, to be replaced with tender, quotation and SERC tariff data. The Market/Support/Mandate shares in 10.5 are illustrative; the model estimates them site by site.</li>
+  <li><b>Low/High light-vs-DC split</b> in 10.2 uses the Base mix until the model outputs the split directly.</li>
+  <li><b>Hex-level demand is modelled</b>, not observed; it carries uncertainty bands and is validated leave-one-district-out.</li>
+  <li><b>Reliability and source priors</b> (r_s, τ, P_work) are assumptions, listed with ranges in the assumptions register and stress-tested in the tornado chart.</li>
+  <li><b>Synthetic data</b>, where used, is flagged per record and listed in the synthetic-data register.</li>
+  <li><b>AI use:</b> AI tools assisted with drafting, code and data extraction; the team has reviewed and takes responsibility for every number in this document. AI-extracted rows link to their source pages.</li>
+</ul>
+
+</body>
+</html>
